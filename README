@@ -6,6 +6,8 @@ Prepare Your Environment
 
 First, make sure you have all the necessary files in the same directory. This includes the deploy_bot.sh, requirements.txt, self_improving_bot.py, and Dockerfile.
 
+MAKE SURE TO REPLACE 'GIVE_ME_YOUR_API_KEY_HERE' with your Chat GPT API key!
+
 Install Docker with Ease
 
 We've streamlined the process for you with a handy shell script. Open your terminal and navigate to the directory containing the files. Then, execute the following commands:
