@@ -77,7 +77,7 @@ docker run -it --rm --network host --privileged --name self_improving_bot_contai
 
 Your bot will spring to life, poised to engage in conversations and learn from interactions.
 
-Ensure Compatibility
+Ensure Compatibility-
 If issues arise due to file conversions from Windows to Linux, don't fret – we've got you covered. Execute the following commands to address any concerns:
 
 ```shell
