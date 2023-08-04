@@ -65,19 +65,23 @@ This script will handle Docker installation, ensuring you're ready to go in no t
 Build and Launch the Bot
 Once Docker is set up, it's time to build and launch your Self-Improving Bot. Run these commands sequentially:
 
-shell
-Copy code
+```shell
 docker build -t self_improving_bot -f Dockerfile .
+```
+```shell
 docker run -it --rm --network host --privileged --name self_improving_bot_container self_improving_bot
+```shell
+
 Your bot will spring to life, poised to engage in conversations and learn from interactions.
 
 Ensure Compatibility
 If issues arise due to file conversions from Windows to Linux, don't fret – we've got you covered. Execute the following commands to address any concerns:
 
-shell
-Copy code
+```shell
 sudo yum install dos2unix
 dos2unix deploy_bot.sh requirements.txt self_improving_bot.py Dockerfile
+```
+
 These commands guarantee a seamless experience by formatting everything perfectly.
 
 Now you're all set to witness the magic of the Self-Improving Bot! Engage in conversations, observe its learning, and watch its responses evolve over time. Feel free to explore and customize the bot's behavior to match your unique use cases.
