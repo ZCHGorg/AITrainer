@@ -68,7 +68,7 @@ Build and Launch the Bot
 Once Docker is set up, it's time to build and launch your Self-Improving Bot. Run these commands sequentially:
 
 ```shell
-docker build -t self_improving_bot -f Dockerfile .
+docker build -t self_improving_bot -f Dockerfile --no-cache .
 ```
 
 ```shell
