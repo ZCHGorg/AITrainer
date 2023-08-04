@@ -92,5 +92,5 @@ Now you're all set to witness the magic of the Self-Improving Bot! Engage in con
 Should questions arise or issues arise, don't hesitate to reach out to our support team. Happy bot-building! 🤖🌟
 
 <p align="center">
-  Made with ❤️ by the innovators at ZchgAIBot
+  Made with ❤️ by the innovators at https://forum.zchg.org
 </p>
