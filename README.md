@@ -1,3 +1,5 @@
+ALPHA VERSION doesn't work great, but it should at least deploy well and help you get started.
+
 # 🌟 Unleash the Power of Self-Improving Bots! 🚀
 
 Welcome to ZchgAIBot – a cutting-edge platform that brings the future to your fingertips. Prepare to be amazed as our Self-Improving Bot evolves before your eyes, delivering more intelligent and sophisticated interactions with each conversation.
@@ -68,9 +70,10 @@ Once Docker is set up, it's time to build and launch your Self-Improving Bot. Ru
 ```shell
 docker build -t self_improving_bot -f Dockerfile .
 ```
+
 ```shell
 docker run -it --rm --network host --privileged --name self_improving_bot_container self_improving_bot
-```shell
+```
 
 Your bot will spring to life, poised to engage in conversations and learn from interactions.
 
