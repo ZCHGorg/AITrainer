@@ -34,7 +34,7 @@ ZchgAIBot's potential is boundless, presenting value across diverse domains:
 
 ## Getting Started
 
-To embark on this exciting journey, refer to our comprehensive installation guide [here](installation_guide.md). Set up your Self-Improving Bot and witness AI evolution firsthand.
+To embark on this exciting journey, refer to our comprehensive installation guide below. Set up your Self-Improving Bot and witness AI evolution firsthand.
 
 ## Connect with Us
 
