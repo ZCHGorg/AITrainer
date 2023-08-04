@@ -31,7 +31,7 @@ class SelfImprovingBot:
             print("Rate limit exceeded. Wait for an hour.")
             return ""
 
-        openai.api_key = 'GIVE_ME_YOUR_API_KEY_HERE'
+        openai.api_key = 'GIVE_ME_YOUR_API'
 
         response = openai.Completion.create(
             engine="text-davinci-003",
@@ -207,7 +207,7 @@ class SelfImprovingBot:
                 response = self.process_user_input(user_input, lang)
                 print(f"User input: {user_input}")
                 print(f"Bot response: {response}")
-                time.sleep(int(1/1000))
+                time.sleep(random.randint(1, 6))
                 self.improve_own_knowledge()
                 self.optimize_resources()
                 self.self_improve()
@@ -225,6 +225,7 @@ class SelfImprovingBot:
 
 if __name__ == "__main__":
     bot = SelfImprovingBot()
+    bot.simulate_conversation()
 
     while True:
         user_input = input("User input: ")
