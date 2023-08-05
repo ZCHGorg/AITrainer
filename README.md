@@ -1,5 +1,3 @@
-ALPHA VERSION doesn't work great, but it should at least deploy well and help you get started.  WARNING: will flood swapfile as of latest version.  Proceed with caution in an isolated environment.  I recommend vultr.com Centos8 node
-
 # 🌟 Unleash the Power of Self-Improving Bots! 🚀
 
 Welcome to ZchgAIBot – a cutting-edge platform that brings the future to your fingertips. Prepare to be amazed as our Self-Improving Bot evolves before your eyes, delivering more intelligent and sophisticated interactions with each conversation.
