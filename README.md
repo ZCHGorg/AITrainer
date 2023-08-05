@@ -94,6 +94,8 @@ Should questions arise or issues arise, don't hesitate to reach out to our suppo
 </p>
 
 ![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/04302ee3-0617-4272-a072-8ce6267488a0)
+^current version
 
+New version, sneak peak:
 ![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/07e965d5-372a-4fa8-8557-a86ba4073784)
 
