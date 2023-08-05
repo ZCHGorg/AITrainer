@@ -3,3 +3,5 @@ scikit-learn
 numpy
 tqdm
 beautifulsoup4
+spacy
+bs4
