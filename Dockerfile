@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy the requirements file into the container
 COPY requirements.txt .
 
+RUN pip install spacy
+RUN python -m spacy download en_core_web_sm
+
 # Install the bot's Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install openai   # Install the openai package
@@ -14,6 +17,7 @@ RUN pip install openai   # Install the openai package
 # Copy your bot's Python script into the container
 COPY self_improving_bot.py .
 COPY conversation_library.py .
+COPY conversation_log.txt /conversation_log.txt
 
 # Run the bot's script when the container starts
 CMD ["python", "self_improving_bot.py"]
