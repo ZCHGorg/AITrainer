@@ -1,4 +1,4 @@
-ALPHA VERSION doesn't work great, but it should at least deploy well and help you get started.  WARNING: will flood swapfile as of latest version.  Proceed with caution in an isolated environment.  I recommend vultr.com Centos8 node
+ALPHA VERSION doesn't work great, but it should at least deploy well and help you get started.  I recommend vultr.com Centos8 node
 
 # 🌟 Unleash the Power of Self-Improving Bots! 🚀
 
