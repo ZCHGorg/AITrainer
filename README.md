@@ -1,3 +1,5 @@
+ALPHA VERSION doesn't work great, but it should at least deploy well and help you get started.  WARNING: will flood swapfile as of latest version.  Proceed with caution in an isolated environment.  I recommend vultr.com Centos8 node
+
 # 🌟 Unleash the Power of Self-Improving Bots! 🚀
 
 Welcome to ZchgAIBot – a cutting-edge platform that brings the future to your fingertips. Prepare to be amazed as our Self-Improving Bot evolves before your eyes, delivering more intelligent and sophisticated interactions with each conversation.
@@ -94,8 +96,4 @@ Should questions arise or issues arise, don't hesitate to reach out to our suppo
 </p>
 
 ![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/04302ee3-0617-4272-a072-8ce6267488a0)
-^current version
-
-New version, sneak peak:
-![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/07e965d5-372a-4fa8-8557-a86ba4073784)
 
