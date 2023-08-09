@@ -29,8 +29,8 @@ class SelfImprovingBot:
         self.user_feedback = {}
         self.context_history = []
         self.external_knowledge_map = {}
-        self.max_context_length = 5
-        self.dynamic_context_window = 2
+        self.max_context_length = 10
+        self.dynamic_context_window = 7
         self.learning_rate = 0.7
         self.response_quality = {}
         self.self_code_improvement = True
@@ -68,6 +68,7 @@ class SelfImprovingBot:
 #        return response.choices[0].text.strip()
 
     def generate_response(self, user_input, lang="en"):
+#        lang = "en"  PROPOSED CHANGE
         context = tuple(self.context_history[-self.dynamic_context_window:])
 
         if context in self.response_cache:
@@ -92,8 +93,11 @@ class SelfImprovingBot:
                 # Extract two consecutive sentences from the same paragraph
                 sentence1 = sentences[0]
                 sentence2 = sentences[1]
-                response = str(f"Time organizes randomness(gen-response). {sentence1} {sentence2}")
-                print("Generated response:", response)
+                accuracy = self.compare_sentences(sentence1, sentence2)
+                response = f"Time organizes randomness(gen-response). Sentence1: {sentence1} Sentence2: {sentence2} Accuracy: {accuracy:.2f}"
+                # preresponse = str(f"Time organizes randomness(gen-response). {sentence1} {sentence2}")
+                # print("Generated response:", preresponse)
+                # response = f"{sentence1} {sentence2}"                
             else:
                 print("Not enough sentences in the paragraph to extract two sentences.")
 
@@ -102,7 +106,7 @@ class SelfImprovingBot:
 
         self.response_cache[context] = response
         return response
-    
+
     def _self_learn(self):
             # Perform self-learning tasks
             self.optimized_self_improve()
@@ -142,8 +146,12 @@ class SelfImprovingBot:
                 # Extract two consecutive sentences from the same paragraph
                 sentence1 = sentences[0]
                 sentence2 = sentences[1]
-                user_input = str(f"Time organizes randomness(gen-response). {sentence1} {sentence2}")
-                print("Generated response:", user_input)
+
+                accuracy = self.compare_sentences(sentence1, sentence2)
+                user_input = f"Time organizes randomness(selfIMP-user_input). Sentence1: {sentence1} Sentence2: {sentence2} Accuracy: {accuracy:.2f}"
+
+                #user_input = str(f"Time organizes randomness(SelfIMPgen-response). {sentence1} {sentence2}")
+                print("SELFIMPROVEDGenerated response:", user_input)
             else:
                 print("Not enough sentences in the paragraph to extract two sentences.")            
 
@@ -152,8 +160,6 @@ class SelfImprovingBot:
 
             # Process the user input
             #response = self.process_user_input(user_input, lang)
-            
-           
 
             # Print the response
             #print("Bot response2:", response)
@@ -342,12 +348,6 @@ class SelfImprovingBot:
         initial_user_input = str(f"{random_sentence}")
         conversation = self.generate_random_conversation(initial_user_input)  # Generate a random conversation
         for user_input, lang in conversation:
-            #response = self.process_user_input(user_input, lang)
-            #random_sentence = random.choice(brown.sents())
-            #random_sentence = ' '.join(random_sentence)
-            #user_input = str(f"Time organizes randomness(simulate conversation). {random_sentence}")
-            #print(f"User input: {user_input}")
-            # Generate a random paragraph (a group of sentences) from the corpus
             random_paragraph = " ".join(" ".join(sentence) for sentence in (random.choice(brown.sents()) for _ in range(5)))
 
             # Tokenize the paragraph into sentences
@@ -358,39 +358,40 @@ class SelfImprovingBot:
                 # Extract two consecutive sentences from the same paragraph
             sentence1 = sentences[0]
             sentence2 = sentences[1]
-            user_input = str(f"Time organizes randomness(SIMgen-response). {sentence1} {sentence2}")
-            print("User Input:", user_input)
-
-
-            # random_sentence2 = random.choice(brown.sents())
-            # random_sentence2 = ' '.join(random_sentence2)  # Corrected this line       
-            # response = str({random_sentence2})  # Corrected this line
-            # print(f"Bot response: {response}")
+            accuracy = 1
+            # accuracy = self.compare_sentences(sentence1, sentence2)
+            user_input = f"Time organizes randomness(sim-input). Sentence1: {sentence1} Sentence2: {sentence2} Accuracy: {accuracy:.2f}"
+            #user_input = str(f"Time organizes randomness(simInput-response). {sentence1} {sentence2}")
+            #self.update_context_history(str(user_input))
+            print("SIM User Input:", user_input)              
             
-            # Generate a random paragraph (a group of sentences) from the corpus
-            #random_paragraph2 = " ".join(random.choice(brown.sents()) for _ in range(5))  # Adjust the number of sentences as needed
-
-            # Tokenize the paragraph into sentences
-            # sentences2 = nltk.sent_tokenize(random_paragraph2)
-
-            # Ensure there are at least two sentences
-            # if len(sentences2) >= 2:
-                # Extract two consecutive sentences from the same paragraph
+            # Extract two consecutive sentences from the same paragraph
             sentence3 = sentences[2]
             sentence4 = sentences[3]
-            response = str(f"Time organizes randomness(SIM2gen-response). {sentence3} {sentence4}")
-            print("Bot response:", response)
+            accuracy = 1
+            #accuracy = self.compare_sentences(sentence1, sentence2)
+            response = f"Time organizes randomness(sim-response). Sentence1: {sentence3} Sentence2: {sentence4} Accuracy: {accuracy:.2f}"
+            #response = str(f"Time organizes randomness(SIMgen-response). {sentence3} {sentence4}")
+            #self.update_context_history(str(response))
+            #self.update_context_history(response)
+            #context_group = f"Sentence1: {sentence1} Sentence2: {sentence2} Sentence3: {sentence3} Sentence4: {sentence4} Accuracy: {accuracy:.2f}"
+            # Update context history with the grouped context
+            #self.update_context_history(context_group)
 
-            # time.sleep(random.randint(1, 6))
-            improved_response, accuracy = self.improve_own_code(response, user_input)  # Unpack tuple and pass response only
-            #improved_response, accuracy = self.improve_own_code(response[0], user_input)
+            
+            print("Sim Bot response:", response, accuracy)
+            improved_response, accuracy = self.improve_own_code(response, user_input)
+
+            #time.sleep(random.randint(1, 2))
+            #time.sleep(1)
+            
             print(f"Improved response: {improved_response} (Accuracy: {accuracy})")
             self.improve_own_knowledge()
             self.optimize_resources()
             self.self_improve()
-            self.simulate_conversation()
         else:
-            print("Not enough sentences in the paragraph to extract two sentences.")
+            print("Not enough sentences in the paragraph to extract four sentences.")
+            self.simulate_conversation()
 
     def generate_random_conversation(self, initial_user_input):
         num_turns = random.randint(3, 10)  # Generate a random number of conversation turns
@@ -447,5 +448,6 @@ if __name__ == "__main__":
         # Continuous self-improvement loop
         bot.improve_own_knowledge()
         bot.optimize_resources()
-        time.sleep(random.randint(1, 2))
+        #time.sleep(random.randint(1, 2))
+        time.sleep(1)
         bot.self_improve()
