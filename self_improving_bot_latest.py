@@ -12,7 +12,7 @@ from nltk.corpus import words, brown
 import tempfile
 import Levenshtein
 import threading
-import itertools
+# import itertools
 
 def create_scratch_drive():
     with tempfile.NamedTemporaryFile() as f:
@@ -231,7 +231,6 @@ class SelfImprovingBot:
             accuracy = self.compare_sentences(improved_response, second_hidden_sentence)
 
             return improved_response, accuracy
-        
         elif self.code_improvement_strategy == "ml_based":
             improved_response = self.apply_ml_suggestions(current_response, context)
 
@@ -358,10 +357,8 @@ class SelfImprovingBot:
                 # Extract two consecutive sentences from the same paragraph
             sentence1 = sentences[0]
             sentence2 = sentences[1]
-            user_input = str(f"Time organizes randomness(SIMgen-response). {sentence1} {sentence2}")
+            user_input = str(f"Time organizes randomness(gen-response). {sentence1} {sentence2}") 
             print("User Input:", user_input)
-
-
             # random_sentence2 = random.choice(brown.sents())
             # random_sentence2 = ' '.join(random_sentence2)  # Corrected this line       
             # response = str({random_sentence2})  # Corrected this line
@@ -378,7 +375,7 @@ class SelfImprovingBot:
                 # Extract two consecutive sentences from the same paragraph
             sentence3 = sentences[2]
             sentence4 = sentences[3]
-            response = str(f"Time organizes randomness(SIM2gen-response). {sentence3} {sentence4}")
+            response = str(f"Time organizes randomness(gen-response). {sentence3} {sentence4}")
             print("Bot response:", response)
 
             # time.sleep(random.randint(1, 6))
@@ -386,7 +383,7 @@ class SelfImprovingBot:
             #improved_response, accuracy = self.improve_own_code(response[0], user_input)
             print(f"Improved response: {improved_response} (Accuracy: {accuracy})")
             self.improve_own_knowledge()
-            self.optimize_resources()
+            #self.optimize_resources()
             self.self_improve()
             self.simulate_conversation()
         else:

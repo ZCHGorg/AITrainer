@@ -1,4 +1,4 @@
-ALPHA VERSION doesn't work great, but it should at least deploy well and help you get started.  I recommend vultr.com Centos8 node
+ALPHA VERSION doesn't work great, but it should at least deploy well and help you get started.  WARNING: will flood swapfile as of latest version.  Proceed with caution in an isolated environment.  I recommend vultr.com Centos8 node
 
 # 🌟 Unleash the Power of Self-Improving Bots! 🚀
 
@@ -95,6 +95,5 @@ Should questions arise or issues arise, don't hesitate to reach out to our suppo
   Made with ❤️ by the innovators at https://forum.zchg.org
 </p>
 
-![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/92cfc1f1-f1e0-4c88-8d03-6ae94257ab84)
-
+![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/04302ee3-0617-4272-a072-8ce6267488a0)
 
