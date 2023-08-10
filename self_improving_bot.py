@@ -12,7 +12,7 @@ from nltk.corpus import words, brown
 import tempfile
 import Levenshtein
 import threading
-import itertools
+#import itertools
 
 def create_scratch_drive():
     with tempfile.NamedTemporaryFile() as f:
@@ -29,8 +29,8 @@ class SelfImprovingBot:
         self.user_feedback = {}
         self.context_history = []
         self.external_knowledge_map = {}
-        self.max_context_length = 10
-        self.dynamic_context_window = 7
+        self.max_context_length = 5000
+        self.dynamic_context_window = 1000
         self.learning_rate = 0.7
         self.response_quality = {}
         self.self_code_improvement = True
@@ -43,11 +43,14 @@ class SelfImprovingBot:
         self.code_versions = [copy.deepcopy(self)]
         self.last_query_time = 0
         self.last_self_improve_time = time.time()
-        self.memory = ""
+        # self.memory = ""
         self.lang = "en"
-        self.response_cache = {}
-        super().__init__()
+        #self.response_cache = {}
+#        super().__init__()
         self.self_learn = True
+        self.self_learning_thread = None  # Initialize thread as an instance attribute
+        self.foreground_accuracy_history = []
+        self.background_accuracy_history = []
 
 
 #    def query_chatgpt(self, prompt):
@@ -77,10 +80,6 @@ class SelfImprovingBot:
         if context in self.context_history:
             response = random.choice(self.context_history[context])
         else:
-            # Select a random sentence from the brown corpus
-            # random_sentence = random.choice(brown.sents())
-            # random_sentence = ' '.join(random_sentence)
-            # response = str(f"Time organizes randomness(gen-response). {random_sentence}")
 
             # Generate a random paragraph (a group of sentences) from the corpus
             random_paragraph = " ".join(" ".join(sentence) for sentence in (random.choice(brown.sents()) for _ in range(5)))
@@ -94,10 +93,7 @@ class SelfImprovingBot:
                 sentence1 = sentences[0]
                 sentence2 = sentences[1]
                 accuracy = self.compare_sentences(sentence1, sentence2)
-                response = f"Time organizes randomness(gen-response). Sentence1: {sentence1} Sentence2: {sentence2} Accuracy: {accuracy:.2f}"
-                # preresponse = str(f"Time organizes randomness(gen-response). {sentence1} {sentence2}")
-                # print("Generated response:", preresponse)
-                # response = f"{sentence1} {sentence2}"                
+                response = f"Time organizes randomness(gen-response). Sentence1: {sentence1} Sentence2: {sentence2} Accuracy: {accuracy:.2f}"             
             else:
                 print("Not enough sentences in the paragraph to extract two sentences.")
 
@@ -125,60 +121,78 @@ class SelfImprovingBot:
                 self.deterministic_fallback()
 
     def self_improve(self):
-            # Run self-learning in a separate thread
-            self_learning_thread = threading.Thread(target=self._self_learn)
-            self_learning_thread.daemon = True
-            self_learning_thread.start()
+        if self.self_learning_thread is None or not self.self_learning_thread.is_alive():
+            # If there's no active thread, or the previous one has completed, start a new thread
+            self.self_learning_thread = threading.Thread(target=self._self_learn)
+            self.self_learning_thread.daemon = True  # Set as daemon thread
+            self.self_learning_thread.start()
+        else:
+            print("A self-learning thread is already active. Skipping new thread creation.")
 
-            # Prompt the bot with new inputs
-            # random_sentence = random.choice(brown.sents())
-            # random_sentence = ' '.join(random_sentence)
-            # user_input = str(f"Time organizes randomness(self-improve). {random_sentence}")
+        # Rest of your code
+        random_paragraph = " ".join(" ".join(sentence) for sentence in (random.choice(brown.sents()) for _ in range(5)))
+        # ... (rest of the code)
+        # self.optimize_resources()
+        # # ... (rest of the code)
+        # self.deterministic_fallback()
 
-            # Generate a random paragraph (a group of sentences) from the corpus
-            random_paragraph = " ".join(" ".join(sentence) for sentence in (random.choice(brown.sents()) for _ in range(5)))
+
+    # def self_improve(self):
+    #     # Run self-learning in a separate thread
+    #     self_learning_thread = threading.Thread(target=self._self_learn)
+    #     self_learning_thread.daemon = True
+    #     self_learning_thread.start()
+
+    #         # Prompt the bot with new inputs
+    #         # random_sentence = random.choice(brown.sents())
+    #         # random_sentence = ' '.join(random_sentence)
+    #         # user_input = str(f"Time organizes randomness(self-improve). {random_sentence}")
+
+    #         # Generate a random paragraph (a group of sentences) from the corpus
+    #     random_paragraph = " ".join(" ".join(sentence) for sentence in (random.choice(brown.sents()) for _ in range(5)))
 
             # Tokenize the paragraph into sentences
-            sentences = nltk.sent_tokenize(random_paragraph)
+        sentences = nltk.sent_tokenize(random_paragraph)
 
             # Ensure there are at least two sentences
-            if len(sentences) >= 2:
+        if len(sentences) >= 2:
                 # Extract two consecutive sentences from the same paragraph
-                sentence1 = sentences[0]
-                sentence2 = sentences[1]
+            sentence1 = sentences[0]
+            sentence2 = sentences[1]
 
-                accuracy = self.compare_sentences(sentence1, sentence2)
-                user_input = f"Time organizes randomness(selfIMP-user_input). Sentence1: {sentence1} Sentence2: {sentence2} Accuracy: {accuracy:.2f}"
+            accuracy = self.compare_sentences(sentence1, sentence2)
+            user_input = f"Time organizes randomness(selfIMP-user_input). Sentence1: {sentence1} Sentence2: {sentence2} Accuracy: {accuracy:.2f}"
 
-                #user_input = str(f"Time organizes randomness(SelfIMPgen-response). {sentence1} {sentence2}")
-                print("SELFIMPROVEDGenerated response:", user_input)
-            else:
-                print("Not enough sentences in the paragraph to extract two sentences.")            
+            #user_input = str(f"Time organizes randomness(SelfIMPgen-response). {sentence1} {sentence2}")
+            print("SELFIMPROVEDGenerated response:", user_input)
+        else:
+            print("Not enough sentences in the paragraph to extract two sentences.")
+            self.self_improve()            
 
-            # Get the user's language preference
-            lang = "en"
+        # Get the user's language preference
+        lang = "en"
 
-            # Process the user input
-            #response = self.process_user_input(user_input, lang)
+        # Process the user input
+        #response = self.process_user_input(user_input, lang)
 
-            # Print the response
-            #print("Bot response2:", response)
+        # Print the response
+        #print("Bot response2:", response)
 
-            # Perform self-improvement tasks
-            self.optimized_self_improve()
-            self.update_context_history()
-            self.update_learning_rate()
-            self.analyze_response_quality()
+        # Perform self-improvement tasks
+        self.optimized_self_improve()
+        self.update_context_history()
+        self.update_learning_rate()
+        self.analyze_response_quality()
 
-            if self.ml_model is None:
-                    self.ml_model = self.train_ml_model()
+        if self.ml_model is None:
+                self.ml_model = self.train_ml_model()
 
-            self.generate_feedback()
-            self.learn_from_self()
-            self.optimize_resources()
+        self.generate_feedback()
+        self.learn_from_self()
+        self.optimize_resources()
 
-            if self.code_improvement_strategy == "context_aware":
-                    self.deterministic_fallback()
+        if self.code_improvement_strategy == "context_aware":
+                self.deterministic_fallback()
 
     def optimized_self_improve(self):
         current_time = time.time()
@@ -200,7 +214,7 @@ class SelfImprovingBot:
             print("Fallback: Performance degraded. Rolled back to previous version.")
 
     def performance_degraded(self, improved_bot):
-        return random.random() < 0.01
+        return random.random() < 0.05
 
     def update_learning_rate(self):
         self.learning_rate = min(0.7, 0.1 + len(self.context_history) / 1000)
@@ -236,6 +250,15 @@ class SelfImprovingBot:
             second_hidden_sentence = self.predict_second_sentence(improved_response)
             accuracy = self.compare_sentences(improved_response, second_hidden_sentence)
 
+            # Update accuracy history based on the code improvement strategy
+            if self.self_code_improvement:
+                self.foreground_accuracy_history.append(accuracy)
+            else:
+                self.background_accuracy_history.append(accuracy)
+
+            # Print overall accuracy drift
+            self.print_accuracy_drift()
+
             return improved_response, accuracy
         
         elif self.code_improvement_strategy == "ml_based":
@@ -245,9 +268,56 @@ class SelfImprovingBot:
             second_hidden_sentence = self.predict_second_sentence(improved_response)
             accuracy = self.compare_sentences(improved_response, second_hidden_sentence)
 
+            # Update accuracy history based on the code improvement strategy
+            if self.self_code_improvement:
+                self.foreground_accuracy_history.append(accuracy)
+            else:
+                self.background_accuracy_history.append(accuracy)
+
+            # Print overall accuracy drift
+            self.print_accuracy_drift()
+
             return improved_response, accuracy
         else:
             return current_response, 0.0  # Return the original response and a default accuracy
+
+    def print_accuracy_drift(self):
+        if self.foreground_accuracy_history:
+            foreground_average_accuracy = sum(self.foreground_accuracy_history) / len(self.foreground_accuracy_history)
+            print("Foreground Average Accuracy:", foreground_average_accuracy)
+        else:
+            print("No foreground accuracy data available.")
+
+        if self.background_accuracy_history:
+            background_average_accuracy = sum(self.background_accuracy_history) / len(self.background_accuracy_history)
+            print("Background Average Accuracy:", background_average_accuracy)
+        else:
+            print("No background accuracy data available.")
+
+    # def improve_own_code(self, current_response, context):
+    #     if self.code_improvement_strategy == "context_aware":
+    #         if "[External Info]" in current_response:
+    #             improved_response = current_response.replace("[External Info]", "[Additional Information]")
+    #         else:
+    #             improved_response = self.apply_regular_expression(current_response)  # Remove accuracy from here
+    #             improved_response = self.apply_ml_suggestions(improved_response, context)
+
+    #         # Pass only the response text to the predict_second_sentence function
+    #         second_hidden_sentence = self.predict_second_sentence(improved_response)
+    #         accuracy = self.compare_sentences(improved_response, second_hidden_sentence)
+
+    #         return improved_response, accuracy
+        
+    #     elif self.code_improvement_strategy == "ml_based":
+    #         improved_response = self.apply_ml_suggestions(current_response, context)
+
+    #         # Pass only the response text to the predict_second_sentence function
+    #         second_hidden_sentence = self.predict_second_sentence(improved_response)
+    #         accuracy = self.compare_sentences(improved_response, second_hidden_sentence)
+
+    #         return improved_response, accuracy
+    #     else:
+    #         return current_response, 0.0  # Return the original response and a default accuracy
 
     def predict_second_sentence(self, response_text):
         # Tokenize the response text
@@ -327,20 +397,20 @@ class SelfImprovingBot:
         self.model_size /= 2
         self.self_improve()
 
-    def improve_own_knowledge(self):
-        state = tuple(self.context_history[-self.dynamic_context_window:])
-        external_info = self.retrieve_external_knowledge(state)
+#     def improve_own_knowledge(self):
+#         state = tuple(self.context_history[-self.dynamic_context_window:])
+#         external_info = self.retrieve_external_knowledge(state)
         
-        if external_info:
-            new_info = external_info
-            self.memory = new_info
-#            print("new knowledge, oh boy!")
-            self.self_improve()
-        else:
-#            print("no external source")
-            self.self_improve()
-            new_letter = random.choice(string.ascii_letters)  # Generate a random letter
-            self.memory += new_letter  # Inject the new letter into the memory
+#         if external_info:
+#             new_info = external_info
+#             self.memory = new_info
+# #            print("new knowledge, oh boy!")
+#             self.self_improve()
+#         else:
+# #            print("no external source")
+#             self.self_improve()
+#             new_letter = random.choice(string.ascii_letters)  # Generate a random letter
+#             self.memory += new_letter  # Inject the new letter into the memory
 
     def simulate_conversation(self):
         random_sentence = random.choice(brown.sents())
@@ -383,10 +453,10 @@ class SelfImprovingBot:
             improved_response, accuracy = self.improve_own_code(response, user_input)
 
             #time.sleep(random.randint(1, 2))
-            #time.sleep(1)
+            time.sleep(0.1)
             
             print(f"Improved response: {improved_response} (Accuracy: {accuracy})")
-            self.improve_own_knowledge()
+            # self.improve_own_knowledge()
             self.optimize_resources()
             self.self_improve()
         else:
@@ -435,6 +505,8 @@ if __name__ == "__main__":
         user_input = str(f"Time organizes randomness(whitetrue). {random_sentence}")
         lang = "en"
         response = str({random_sentence})
+
+        
         #response = bot.process_user_input(user_input, lang)
         
         # Log the conversation
@@ -446,8 +518,8 @@ if __name__ == "__main__":
  #       print("Bot response:", response)
 
         # Continuous self-improvement loop
-        bot.improve_own_knowledge()
+        # bot.improve_own_knowledge()
         bot.optimize_resources()
         #time.sleep(random.randint(1, 2))
-        time.sleep(1)
+        time.sleep(0.1)
         bot.self_improve()
