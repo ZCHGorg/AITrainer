@@ -1,6 +1,7 @@
 <h1 align="center">
   <br>
-  ![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/9048b92e-b5c9-46ae-bb01-f0d7d946b7a0)
+![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/25ef1647-91f6-4e3d-b6ed-852258cde061)
+
 
   <br>
   Distributed Machine Learning Swarm Bot with Docker
