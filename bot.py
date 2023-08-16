@@ -14,27 +14,20 @@ import collections
 import threading
 from threading import Thread, Lock
 import requests
+#import geneticalgorithm as ga
+#from geneticalgorithm import choose_best_word
 import numpy as np
+#import self_improving_bot as swarm_bot
+# import swarm_bot
+# from swarm_bot import SelfImprovingBot
 import multiprocessing
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 import termcolor
 from termcolor import colored  # Install 'termcolor' package for colored text
-from functools import wraps
+import hashlib
 # import numba.rocm as roc
-# import numba.cuda as cuda
-
-def colored_bot(func):
-    @wraps(func)
-    def wrapper(self_or_name, *args, **kwargs):
-        if isinstance(self_or_name, SelfImprovingBot):
-            bot = self_or_name
-            colored_name = colored(bot.name, bot.color)
-            return func(bot, colored_name, *args, **kwargs)
-        else:
-            bot_name = self_or_name
-            return func(bot_name, *args, **kwargs)
-    return wrapper
+# import numba.cuda as cuda   DON'T FORGET TO ENABLE THESE AND THE METHOD FOR THESE WHEN YOU ENABLE GPU
 
 def create_scratch_drive():
     with tempfile.NamedTemporaryFile() as f:
@@ -77,13 +70,13 @@ nltk.download('words', download_dir="./")
 nltk.download('brown', download_dir="./")
 
 class SelfImprovingBot:
-    def __init__(self, name, dynamic_context_window, shared_context_history, max_context_length=5000):
-        #self.color = color
+    shared_context_history = None  # Initialize the class attribute
+    
+    def __init__(self, decay_factor=0.95, max_context_length=5000, dynamic_context_window=550, name="name"):
         self.max_context_length = max_context_length
         self.name = name
         self.dynamic_context_window = dynamic_context_window
         self.context_history = collections.deque(maxlen=max_context_length)
-        self.shared_context_history = shared_context_history
         self.user_feedback = {}
         self.external_knowledge_map = {}
         self.learning_rate = 0.7
@@ -99,6 +92,7 @@ class SelfImprovingBot:
         self.last_query_time = 0
         self.last_self_improve_time = time.time()
         self.memory = ""
+        self.global_accuracy_scores = []
         self.accuracy_history = []
         self.last_foreground_average_accuracy = None
         self.foreground_accuracy_history = self.accuracy_history
@@ -108,7 +102,8 @@ class SelfImprovingBot:
         self.context_history_for_current_topic_lock = multiprocessing.Lock()
         self.simulate_conversation_lock = multiprocessing.Lock()  # Add a lock for concurrent access
         self.context_file_path = f"{name}_context.txt"
-        self.color = assigned_colors.get(name, random.choice(available_colors))  # Get assigned color or choose randomly
+        self.decay_factor = decay_factor  # Decay factor to reduce the weight of scores over time
+
 
     def update_conversation_history(self, new_context_history):
         with self.context_history_lock:
@@ -166,7 +161,7 @@ class SelfImprovingBot:
                 # Select a random sentence from the brown corpus
                 random_sentence = random.choice(brown.sents())
                 random_sentence = ' '.join(random_sentence)
-                response = f"(GenRandResp) {random_sentence}" 
+                response = f"Time organizes randomness. {random_sentence}" 
 
             if self.self_code_improvement:
                 response = self.improve_own_code(response, context)
@@ -194,8 +189,8 @@ class SelfImprovingBot:
         self.learn_from_self()
         self.optimize_resources()
 
-        if self.code_improvement_strategy == "context_aware":
-            self.deterministic_fallback()
+        # if self.code_improvement_strategy == "context_aware":
+        #     self.deterministic_fallback()
 
     def update_shared_context_history(self, new_context_history):
         with self.context_history_lock:
@@ -239,23 +234,23 @@ class SelfImprovingBot:
                     changes_to_context_history.append(self.context_history[i])
             return changes_to_context_history
 
-    def deterministic_fallback(self):
-        improved_bot = self.code_versions[-1]
-        current_bot = self
-        if current_bot.performance_degraded(improved_bot):
-            self = improved_bot
-            print("Fallback: Performance degraded. Rolled back to previous version.")
+    # def deterministic_fallback(self):
+    #     improved_bot = self.code_versions[-1]
+    #     current_bot = self
+    #     if current_bot.performance_degraded(improved_bot):
+    #         self = improved_bot
+    #         print("Fallback: Performance degraded. Rolled back to previous version.")
 
-        # Get the most recent context
-        context = self.context_history[-1]
+    #     # Get the most recent context
+    #     context = self.context_history[-1]
 
-        # Generate a response based on the context
-        response = self.generate_response(context)
+    #     # Generate a response based on the context
+    #     response = self.generate_response(context)
 
-        return response
+    #     return response
 
-    def performance_degraded(self, improved_bot):
-        return random.random() < 0.01
+    # def performance_degraded(self, improved_bot):
+    #     return random.random() < 0.01
 
     def update_learning_rate(self):
         if self.foreground_accuracy_history:
@@ -321,7 +316,18 @@ class SelfImprovingBot:
             self.print_accuracy_drift(bot_name)
 
             return improved_response, accuracy
-     
+        
+    def generate_unique_color(self, bot_name):
+        hash_value = int(hashlib.sha256(bot_name.encode()).hexdigest(), 16)
+        color_list = [
+            "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white",
+            "light_grey", "dark_grey", "light_red", "light_green", "light_yellow",
+            "light_blue", "light_magenta", "light_cyan"
+        ]
+        color_index = hash_value % len(color_list)
+        bot_color = color_list[color_index]
+        return bot_color
+
     def print_accuracy_drift(self, bot_name):
         num_iterations_for_change = 10  # Number of iterations to consider for average accuracy change
 
@@ -338,15 +344,16 @@ class SelfImprovingBot:
                 else:
                     change_color = "blue"  # Display "No Change" in blue
 
-                if change_color == "green":
-                    change_text = colored("Improving", "green")
-                else:
-                    change_text = colored("Declining" if change_color == "red" else "No Change", change_color)
+                bot_color = self.generate_unique_color(bot_name)  # Generate a unique color for the bot
 
-                print(f"Bot: {bot_name}, AVG.Accuracy: {last_n_avg_accuracy:.4f}, Change: {change_text}, Count: {self.accuracy_change_count}")
+                change_text = "Improving" if change_color == "green" else ("Declining" if change_color == "red" else "No Change")
+                change_text_colored = colored(change_text, change_color)
+                bot_name_colored = colored(bot_name, bot_color, attrs=["bold"])
+
+                print(f"{bot_name_colored}, AVG.Accuracy: {last_n_avg_accuracy:.4f}, Change: {change_text_colored}, Count: {self.accuracy_change_count}")
                 self.last_foreground_average_accuracy = last_n_avg_accuracy
         else:
-            print(f"Bot: {bot_name}, Not enough iterations for accuracy comparison.")
+            print(f"{bot_name}, Not enough iterations for accuracy comparison.")
 
     def print_global_accuracy(self, bot_name):
         num_iterations_for_change = 10  # Number of iterations to consider for average accuracy change
@@ -363,11 +370,11 @@ class SelfImprovingBot:
                     global_change_color = None
 
                 if global_change_color:
-                    global_change_text = colored("Improving", global_change_color)
+                    global_change_text = colored(f"{last_n_avg_accuracy:.4f}", global_change_color)  # Highlight the accuracy score
                 else:
-                    global_change_text = "Stable"
+                    global_change_text = f"{last_n_avg_accuracy:.4f}"
 
-                print(f"Bot: {bot_name}, Global AVG.Accuracy: {last_n_avg_accuracy:.4f}, Change: {global_change_text}")
+                print(f"Bot: {bot_name}, DO YOU SEE ME NOW??????????????????????????????????????????????????????????????????????? Global AVG.Accuracy: {global_change_text}")
                 self.last_global_average_accuracy = last_n_avg_accuracy
         else:
             print("Not enough iterations for global accuracy comparison.")
@@ -395,7 +402,10 @@ class SelfImprovingBot:
 
                 relevance_scores = self.calculate_similarity(response_text, context_suggestions)
 
-                most_relevant_index = np.argmax(relevance_scores)
+                # Apply the decay factor to the relevance scores
+                decayed_scores = [score * self.decay_factor ** idx for idx, score in enumerate(relevance_scores)]
+
+                most_relevant_index = np.argmax(decayed_scores)
                 most_relevant_suggestion = context_suggestions[most_relevant_index]
 
                 if isinstance(most_relevant_suggestion, tuple):
@@ -405,7 +415,7 @@ class SelfImprovingBot:
                 return improved_response
 
         return response
-
+    
     def calculate_similarity(self, response_text, context_suggestions):
         vectorizer = TfidfVectorizer()
         all_texts = [response_text] + [suggestion[0] for suggestion in context_suggestions]
@@ -413,7 +423,7 @@ class SelfImprovingBot:
         similarity_matrix = cosine_similarity(tfidf_matrix)
         relevance_scores = similarity_matrix[0, 1:]
         return relevance_scores
-       
+    ######## REMOVE COMMENTS FROM THE FOLLOWING AND COMMENT OUT THE ABOVE WHEN ENABLE GPU #######
     # def calculate_similarity(self, response_text, context_suggestions):
     #     vectorizer = TfidfVectorizer()
     #     all_texts = [response_text] + [suggestion[0] for suggestion in context_suggestions]
@@ -464,14 +474,12 @@ class SelfImprovingBot:
         improved_code = self.improve_own_code(self_improvement_dialogue, self_improvement_context)
         self.context_history[self.context_history.index(self_improvement_context)] = improved_code
 
-
     def optimize_resources(self):
         if self.model_size > self.memory_threshold:
             self.compress_model()
 
     def compress_model(self):
         self.model_size /= 2
-
 
     def retrieve_external_knowledge(self, state):
         with self.scrape_web_page_lock:
@@ -496,7 +504,7 @@ class SelfImprovingBot:
             new_letter = str(random.choice(brown.sents()))
             #random_sentence = ' '.join(random_sentence)
           #  new_letter = random.choice(string.ascii_letters)  # Generate a random letter
-            self.memory += new_letter  # Inject the new letter into the memory
+            self.memory += new_letter  # Inject the new sentence into the memory
 
     def handle_state_change(self, new_info):
         if self.context_history:
@@ -513,7 +521,7 @@ class SelfImprovingBot:
     def conceptualize_difference(self, old_info, new_info):
         conceptualized_difference = "Conceptualized Difference"
         return conceptualized_difference
-    
+
     def simulate_conversation(self):
         with self.simulate_conversation_lock:
             while True:
@@ -548,7 +556,8 @@ class SelfImprovingBot:
                         self.self_improve()
                     else:
                         print("Not enough sentences in the paragraph to extract two sentences.")
-                        self.context_history = [user_input]
+                        user_input, lang = self.generate_random_conversation()  # Unpack the returned value
+                        self.context_history = [(user_input, lang)]  # Store both user input and language in the context history
                         response = self.process_user_input(user_input, lang)
                         print(f"User input: {user_input}")
                         print(f"Bot response: {response}")
@@ -568,40 +577,27 @@ class SelfImprovingBot:
 
         return conversation
 
-# def assign_bot_color(func):
-#     assigned_colors = {}
-#     available_colors = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
-    
-#     @wraps(func)
-#     def wrapper(bot_name, *args, **kwargs):
-#         if bot_name not in assigned_colors:
-#             color = random.choice(available_colors)
-#             assigned_colors[bot_name] = color
-#         colored_bot_name = colored(bot_name, assigned_colors[bot_name])
-#         return func(colored_bot_name, *args, **kwargs)
-#     return wrapper
-
-def bot_process(bot_name, shared_context_history):
-    bot = SelfImprovingBot(max_context_length=5000, dynamic_context_window=550, name=bot_name, shared_context_history=shared_context_history)
-    print(f"{colored(bot_name, bot.color)} is ready.")
+def bot_process(bot_name):
+    bot = SelfImprovingBot(max_context_length=5000, dynamic_context_window=550, name=bot_name)
+    print(f"{bot_name} is ready.")
     
     while True:
         bot.simulate_conversation()
         time.sleep(random.randint(1, 2))  # Add some delay between conversations
 
+
 if __name__ == "__main__":
     num_bots = 10
-    bot_names = [f"Mr_Meeseeks_{i}" for i in range(1, num_bots + 1)]
-    available_colors = ["yellow", "magenta", "cyan"]
-    
-    assigned_colors = {}  # Dictionary to store assigned colors
+    bot_names = [f"zchg.org{i}" for i in range(1, num_bots + 1)]
 
     manager = multiprocessing.Manager()
     shared_context_history = manager.list()
 
+    SelfImprovingBot.shared_context_history = shared_context_history  # Assign the shared context history to the class
+
     processes = []
     for bot_name in bot_names:
-        process = multiprocessing.Process(target=bot_process, args=(bot_name, shared_context_history))
+        process = multiprocessing.Process(target=bot_process, args=(bot_name,))
         processes.append(process)
         process.start()
 
@@ -609,165 +605,3 @@ if __name__ == "__main__":
         process.join()
 
     print("All bots are done.")
-
-    # while True:
-    #     user_input = input("User input: ")
-    #     lang = input("Enter user's language (en/es/fr/de): ")
-    #     response = bot.process_user_input(user_input, lang)
-        
-    #     # Log the conversation
-    #     with open("conversation_log.txt", "a") as log_file:
-    #         log_file.write(f"User: {user_input}\n")
-    #         log_file.write(f"Bot: {response}\n")
-    #         log_file.write("=" * 40 + "\n")
-        
-    #     print("Bot response:", response)
-
-    #     # Continuous self-improvement loop
-    #     bot.improve_own_knowledge()
-    #     bot.optimize_resources()
-    #     time.sleep(random.randint(1, 2))
-    #     #time.sleep(1/10)
-    #     bot.self_improve()
-
-
-
-
-        
-    # bot.simulate_conversation()
-
-    # while True:
-    #     user_input = input("User input: ")
-    #     lang = input("Enter user's language (en/es/fr/de): ")
-    #     response = bot.process_user_input(user_input, lang)
-        
-    #     # Log the conversation
-    #     with open("conversation_log.txt", "a") as log_file:
-    #         log_file.write(f"User: {user_input}\n")
-    #         log_file.write(f"Bot: {response}\n")
-    #         log_file.write("=" * 40 + "\n")
-        
-    #     print("Bot response:", response)
-
-    #     # Continuous self-improvement loop
-    #     bot.improve_own_knowledge()
-    #     bot.optimize_resources()
-    #     time.sleep(random.randint(1, 2))
-    #     #time.sleep(1/10)
-    #     bot.self_improve()
-
-
-
-
-
-
-
-
-    # bots = [
-    #     SelfImprovingBot("Bot 1", dynamic_context_window=5000),
-    #     SelfImprovingBot("Bot 2", dynamic_context_window=5000),
-    #     SelfImprovingBot("Bot 3", dynamic_context_window=5000),
-    # ]
-
-    # # Create an instance of YourClass and start the conversation simulation for each bot
-    # your_instance = SelfImprovingBot(name = "bot4", dynamic_context_window=5000)  # Replace with appropriate instantiation
-    # simulation_threads = []
-
-    # for bot in bots:
-    #     simulation_thread = Thread(target=SelfImprovingBot.simulate_conversation(self=bots, lang="en"))
-    #     simulation_threads.append(simulation_thread)
-    #     simulation_thread.start()
-
-    #                 # Continue with your main loop here (if needed)
-    #     while True:
-    #                     # Perform other tasks or waiting as needed
-    #         user_input = input("User input: ")
-    #         lang = input("Enter user's language (en/es/fr/de): ")
-
-    #         swarm_bot.swarm_conversation(bots, user_input, lang)
-
-    #         # Continuous self-improvement loop
-    #         bot.improve_own_knowledge()
-    #         bot.optimize_resources()
-    #         time.sleep(random.randint(1, 2))
-
-    # while True:
-
-            
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    # bot = swarm_bot.SelfImprovingBot("My Bot")
-
-    # while True:
-    #     user_input = input("User input: ")
-    #     lang = input("Enter user's language (en/es/fr/de): ")
-
-    #     response = swarm_bot.my_swarm_conversation(bots, user_input, lang)
-
-    #     print("Bot response:", response)
-
-    #     # Continuous self-improvement loop
-    #     bot.improve_own_knowledge()
-    #     bot.optimize_resources()
-    #     time.sleep(random.randint(1, 2))
-    #     bot = swarm_bot.SelfImprovingBot("My Bot")
-
-
-
-
-
-
-    # while True:
-    #     user_input = input("User input: ")
-    #     lang = input("Enter user's language (en/es/fr/de): ")
-    #    # response = swarm_bot.swarm_conversation(user_input, lang)
-    #     response = swarm_bot.swarm_conversation(bots, user_input, lang)
-        
-    #     # Log the conversation
-    #     with open("conversation_log.txt", "a") as log_file:
-    #         log_file.write(f"User: {user_input}\n")
-    #         log_file.write(f"Bot: {response}\n")
-    #         log_file.write("=" * 40 + "\n")
-        
-    #     print("Bot response:", response)
-
-    #     # Continuous self-improvement loop
-    #     bot.improve_own_knowledge()
-    #     bot.optimize_resources()
-    #     time.sleep(random.randint(1, 2))
-    #     #time.sleep(1/10)
-    #     bot.self_improve()
-
-    
- #   bot.simulate_conversation()
-
-    # while True:
-    #     user_input = input("User input: ")
-    #     lang = input("Enter user's language (en/es/fr/de): ")
-    #     response = bot.process_user_input(user_input, lang)
-        
-    #     # Log the conversation
-    #     with open("conversation_log.txt", "a") as log_file:
-    #         log_file.write(f"User: {user_input}\n")
-    #         log_file.write(f"Bot: {response}\n")
-    #         log_file.write("=" * 40 + "\n")
-        
-    #     print("Bot response:", response)
-
-    #     # Continuous self-improvement loop
-    #     bot.improve_own_knowledge()
-    #     bot.optimize_resources()
-    #     time.sleep(random.randint(1, 2))
-    #     #time.sleep(1/10)
-    #     bot.self_improve()
