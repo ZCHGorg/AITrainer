@@ -1,10 +1,7 @@
 <h1 align="center">
   <br>
-![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/25ef1647-91f6-4e3d-b6ed-852258cde061)
-
-
   <br>
-  Distributed Machine Learning Swarm Bot with Docker
+  Distributed Machine Learning Swarm Bot with Docker, Native Multiprocessing, Primitives for GPU Acceleration
   <br>
 </h1>
 
@@ -72,3 +69,4 @@ This chatbot is designed for educational and experimental purposes. It lacks rea
 <p align="center">
   Made with ❤️ by <a href="https://zchg.org">zchg.org</a>
 </p>
+![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/59ea6c68-2a7a-4e9c-beea-c601ca7874b4)
