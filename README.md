@@ -1,6 +1,5 @@
 <h1 align="center">
   <br>
-  <img src="chatbot_logo.png" alt="Distributed Chatbot" width="200">
   <br>
   Distributed Machine Learning Swarm Bot with Docker
   <br>
