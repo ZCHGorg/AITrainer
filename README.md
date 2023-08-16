@@ -1,6 +1,7 @@
 <h1 align="center">
   <br>
-  <img src="chatbot_logo.png" alt="Distributed Chatbot" width="200">
+  ![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/9048b92e-b5c9-46ae-bb01-f0d7d946b7a0)
+
   <br>
   Distributed Machine Learning Swarm Bot with Docker
   <br>
