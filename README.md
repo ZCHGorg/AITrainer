@@ -67,7 +67,7 @@ Contributing
 Contributions are welcomed! Feel free to fork this repository, enhance, and submit pull requests. If you come across any issues or have suggestions, please open an issue.
 
 Credits
-Developed by [Josef Kulovany]. Inspired by advancements in AI and NLP over at https://zchg.org
+Developed by: [Josef Kulovany]. Inspired by advancements in AI and NLP over at https://zchg.org
 
 Disclaimer
 This chatbot is designed for educational and experimental purposes. It lacks real-world intelligence. Use AI responsibly and consider ethical implications.
