@@ -485,21 +485,39 @@ class SelfImprovingBot:
         response = self.generate_response(user_input, lang)
         return response
 
-    def improve_own_knowledge(self):
-        # Convert context history to a list for slicing
-        context_list = list(self.context_history)
-        context_subset = context_list[-self.dynamic_context_window:]  # Slicing on a list
-        
-        state = tuple(context_subset)  # Convert the subset back to a tuple for the 'state'
+    # def improve_own_knowledge(self):
+    #     with self.context_history_lock:
+    #         # Convert context history to a list for slicing
+    #         context_list = list(self.context_history)
+    #         context_subset = context_list[-self.dynamic_context_window:]  # Slicing on a list
+            
+    #         state = tuple(context_subset)  # Convert the subset back to a tuple for the 'state'
 
-        external_info = self.retrieve_external_knowledge(state)
-        
-        if external_info:
-            print("RandSentence")
-            new_letter = str(random.choice(brown.sents()))
-            #random_sentence = ' '.join(random_sentence)
-          #  new_letter = random.choice(string.ascii_letters)  # Generate a random letter
-            self.memory += new_letter  # Inject the new sentence into the memory
+    #         external_info = self.retrieve_external_knowledge(state)
+            
+    #         if external_info:
+    #             print("Running simulate_conversation to generate external information...")
+    #             self.simulate_conversation()  # Run simulate_conversation to get external information
+                
+    #             # Rest of your code for processing the simulated conversation output
+    #             # ...
+
+    def improve_own_knowledge(self, simulate_conversation_call=True):
+        if not simulate_conversation_call:
+            # Convert context history to a list for slicing
+            context_list = list(self.context_history)
+            context_subset = context_list[-self.dynamic_context_window:]  # Slicing on a list
+            
+            state = tuple(context_subset)  # Convert the subset back to a tuple for the 'state'
+
+            external_info = self.retrieve_external_knowledge(state)
+            
+            if external_info:
+                print("RandSentence")
+                new_letter = str(random.choice(brown.sents()))
+                #random_sentence = ' '.join(random_sentence)
+            #  new_letter = random.choice(string.ascii_letters)  # Generate a random letter
+                self.memory += new_letter  # Inject the new sentence into the memory
 
     def handle_state_change(self, new_info):
         if self.context_history:
@@ -529,37 +547,32 @@ class SelfImprovingBot:
                     random_paragraph = " ".join(" ".join(sentence) for sentence in (random.choice(brown.sents()) for _ in range(5)))
                     sentences = nltk.sent_tokenize(random_paragraph)
 
-                    if len(sentences) >= 4:
-                        sentence1 = sentences[0]
-                        sentence2 = sentences[1]
-                        user_input = str(f"(SimInput-response) {sentence1} {sentence2}")
-                        print("SIM User Input:", user_input)
-
-                        sentence3 = sentences[2]
-                        sentence4 = sentences[3]
-                        response = str(f"(SIMgen-response). {sentence3} {sentence4}")
-                        print("Sim Bot response:", response)
-
-                        time.sleep(random.randint(1, 2))
-                        improved_response, accuracy = self.improve_own_code(response, user_input)
-                        print(f"Impr. response: {improved_response} (Accuracy: {accuracy})")
-
-                        # Rest of your code for updating context_history, self-improvement, etc.
-                        self.context_history = [user_input, response, improved_response]
-                        self.improve_own_knowledge()
-                        self.optimize_resources()
-                        self.self_improve()
-                    else:
+                    while len(sentences) < 4:
                         print("Not enough sentences in the paragraph to extract two sentences.")
-                        user_input, lang = self.generate_random_conversation()  # Unpack the returned value
-                        self.context_history = [(user_input, lang)]  # Store both user input and language in the context history
-                        response = self.process_user_input(user_input, lang)
-                        print(f"User input: {user_input}")
-                        print(f"Bot response: {response}")
-                        time.sleep(random.randint(1, 2))
-                        self.improve_own_knowledge()
-                        self.optimize_resources()
-                        self.self_improve()
+                        self.improve_own_knowledge(simulate_conversation_call=False)  # Skip the improvement logic
+                        conversation = self.generate_random_conversation()  # Generate a new conversation
+                        random_paragraph = " ".join(" ".join(sentence) for sentence in (random.choice(brown.sents()) for _ in range(5)))
+                        sentences = nltk.sent_tokenize(random_paragraph)
+
+                    sentence1 = sentences[0]
+                    sentence2 = sentences[1]
+                    user_input = str(f"(SimInput-response) {sentence1} {sentence2}")
+                    print("SIM User Input:", user_input)
+
+                    sentence3 = sentences[2]
+                    sentence4 = sentences[3]
+                    response = str(f"(SIMgen-response). {sentence3} {sentence4}")
+                    print("Sim Bot response:", response)
+
+                    time.sleep(random.randint(1, 2))
+                    improved_response, accuracy = self.improve_own_code(response, user_input)
+                    print(f"Impr. response: {improved_response} (Accuracy: {accuracy})")
+
+                    # Rest of your code for updating context_history, self-improvement, etc.
+                    self.context_history = [user_input, response, improved_response]
+                    self.improve_own_knowledge()
+                    self.optimize_resources()
+                    self.self_improve()
 
     def generate_random_conversation(self):
         num_turns = random.randint(3, 10)  # Generate a random number of conversation turns
