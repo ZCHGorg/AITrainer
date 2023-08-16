@@ -1,29 +1,52 @@
 # Use a base image with Python and necessary dependencies
 FROM python:3.8-slim-buster
 
-#RUN pip install spacy==3.1.3
-#RUN python -m spacy download en_core_web_md
+# Install system library required for Tkinter
+RUN apt-get update && \
+    apt-get install -y tk
 
 # Set the working directory
 WORKDIR /app
 
+# Introduce a label for cache busting the context history
+LABEL BUST_CONTEXT=${BUILD_DATE}
+
 # Copy the requirements file into the container
 COPY requirements.txt .
 COPY conversation_log.txt .
+COPY bot.py .
 
+# Install necessary Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-#RUN pip install openai   # Install the openai package
 RUN pip install Levenshtein
+RUN pip install requests
+RUN pip install matplotlib
+RUN pip install numpy
+RUN pip install scikit-learn
+RUN pip install nltk
+RUN pip install termcolor
+
+# Install ROCm dependencies if ROCM environment variable is set
+# ARG ROCM
+# RUN if [ "$ROCM" = "true" ]; then \
+#     apt-get update && \
+#     apt-get install -y rocm-libs miopen-hip; \
+#     pip install numba; \
+# fi
+
+# Install CUDA dependencies if CUDA environment variable is set
+# ARG CUDA
+# RUN if [ "$CUDA" = "true" ]; then \
+#     apt-get update && \
+#     apt-get install -y nvidia-cuda-toolkit; \
+#     pip install numba; \
+# fi
 
 # Install NLTK and download required datasets
-RUN pip install nltk
 RUN python -m nltk.downloader words brown
 
 # Set NLTK_DATA to the current directory
 ENV NLTK_DATA=/
 
-# Copy your bot's Python script into the container
-COPY self_improving_bot.py .
-
 # Run the bot's script when the container starts
-CMD ["python", "self_improving_bot.py", "simulate_conversation"]
+CMD ["python", "bot.py", "simulate_conversation"]

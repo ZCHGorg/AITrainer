@@ -1,4 +1,18 @@
+# Levenshtein
+# requests
+# matplotlib
+# geneticalgorithm
+# numpy
+# scikit-learn
+# nltk
+# #scikit-learn
+# #numpy
 
-#scikit-learn
-#numpy
+# RUN pip install Levenshtein
+# RUN pip install requests
+# RUN pip install matplotlib
+# #RUN pip install geneticalgorithm
+# RUN pip install numpy
+# RUN pip install scikit-learn
+# RUN pip install nltk
 

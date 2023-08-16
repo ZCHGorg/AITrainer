@@ -95,6 +95,5 @@ Should questions arise or issues arise, don't hesitate to reach out to our suppo
   Made with ❤️ by the innovators at https://forum.zchg.org
 </p>
 
-![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/80abfc77-681a-439b-ba05-9d99711151a1)
-
+![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/04302ee3-0617-4272-a072-8ce6267488a0)
 
