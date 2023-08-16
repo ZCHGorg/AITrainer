@@ -14,12 +14,7 @@ import collections
 import threading
 from threading import Thread, Lock
 import requests
-#import geneticalgorithm as ga
-#from geneticalgorithm import choose_best_word
 import numpy as np
-#import self_improving_bot as swarm_bot
-# import swarm_bot
-# from swarm_bot import SelfImprovingBot
 import multiprocessing
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
