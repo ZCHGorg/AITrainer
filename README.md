@@ -79,7 +79,7 @@ This chatbot is designed for educational and experimental purposes. It lacks rea
 This version includes the instructions for launching the Docker container using the bot.py script within the container to simulate conversations.
 <img src="[[https://github.com/ZCHGorg/ChatAI/raw/main/assets/24325826/89bc91e7-8959-4607-a7bd-bd8f4b115645.png](https://forum.chgcoin.org/uploads/default/optimized/1X/1a7453ae741e083f91b93421d75751e59f3957e2_2_690x383.png)](https://forum.chgcoin.org/uploads/default/optimized/1X/1a7453ae741e083f91b93421d75751e59f3957e2_2_690x383.png)" alt="image">
 <img src="https://github.com/ZCHGorg/ChatAI/raw/main/assets/24325826/ae226673-ef24-4b1c-8cf2-7d9bf2ab596c.png" alt="image">
-<img src="https://github.com/ZCHGorg/ChatAI/raw/main/assets/24325826/5f3c1404-ab7d-4918-ab2c-1b085a2a9ec7.png" alt="image">
+![image](https://github.com/ZCHGorg/ChatAI/raw/main/assets/24325826/5f3c1404-ab7d-4918-ab2c-1b085a2a9ec7.png)
 ![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/04302ee3-0617-4272-a072-8ce6267488a0)
 ^oldest version
 
