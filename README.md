@@ -86,6 +86,8 @@ This version includes the instructions for launching the Docker container using 
 New version, sneak peak:
 ![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/07e965d5-372a-4fa8-8557-a86ba4073784)
 ![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/15c2a25e-1ba6-4042-96ba-fcc18680447f)
+![image](https://github.com/ZCHGorg/ChatAI/assets/24325826/64961613-9d7f-4f7a-9765-9b9b83de47de)
+
 
 
 
