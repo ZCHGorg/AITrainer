@@ -68,7 +68,7 @@ nltk.download('brown', download_dir="./")
 class SelfImprovingBot:
     shared_context_history = None  # Initialize the class attribute
     
-    def __init__(self, decay_factor=0.99999999, max_context_length=5000, dynamic_context_window=550, name="name"):
+    def __init__(self, decay_factor=0.95, max_context_length=5000, dynamic_context_window=550, name="name"):
         self.max_context_length = max_context_length
         self.name = name
         self.dynamic_context_window = dynamic_context_window
