@@ -18,6 +18,7 @@ import numpy as np
 import multiprocessing
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LinearRegression
 import termcolor
 from termcolor import colored  # Install 'termcolor' package for colored text
 import hashlib
@@ -67,7 +68,7 @@ nltk.download('brown', download_dir="./")
 class SelfImprovingBot:
     shared_context_history = None  # Initialize the class attribute
     
-    def __init__(self, decay_factor=0.95, max_context_length=5000, dynamic_context_window=550, name="name"):
+    def __init__(self, decay_factor=0.99999999, max_context_length=5000, dynamic_context_window=550, name="name"):
         self.max_context_length = max_context_length
         self.name = name
         self.dynamic_context_window = dynamic_context_window
@@ -98,7 +99,10 @@ class SelfImprovingBot:
         self.simulate_conversation_lock = multiprocessing.Lock()  # Add a lock for concurrent access
         self.context_file_path = f"{name}_context.txt"
         self.decay_factor = decay_factor  # Decay factor to reduce the weight of scores over time
-
+        self.shared_context_add_count = 0 
+        self.accuracy_threshold_shared = 0.05  # Initial low accuracy threshold for shared context
+        self.accuracy_threshold_individual = 0.05
+        self.self_context = []
 
     def update_conversation_history(self, new_context_history):
         with self.context_history_lock:
@@ -229,43 +233,39 @@ class SelfImprovingBot:
                     changes_to_context_history.append(self.context_history[i])
             return changes_to_context_history
 
-    # def deterministic_fallback(self):
-    #     improved_bot = self.code_versions[-1]
-    #     current_bot = self
-    #     if current_bot.performance_degraded(improved_bot):
-    #         self = improved_bot
-    #         print("Fallback: Performance degraded. Rolled back to previous version.")
-
-    #     # Get the most recent context
-    #     context = self.context_history[-1]
-
-    #     # Generate a response based on the context
-    #     response = self.generate_response(context)
-
-    #     return response
-
-    # def performance_degraded(self, improved_bot):
-    #     return random.random() < 0.01
-
     def update_learning_rate(self):
         if self.foreground_accuracy_history:
             foreground_average_accuracy = sum(self.foreground_accuracy_history) / len(self.foreground_accuracy_history)
-            color_indicator = "No Change"  # Default indicator for no significant change
             
+            # Use the line of best fit to predict accuracy change point
+            num_iterations_for_change = self.find_change_iteration()
+
+            color_indicator = None  # Default indicator for no significant change
+
             if self.last_foreground_average_accuracy is not None:
                 if foreground_average_accuracy > self.last_foreground_average_accuracy:
-                    color_indicator = colored("Green", "green")  # Colored output for accuracy improvement
-                    self.learning_rate = min(0.7, self.learning_rate * 1.1)
+                    color_indicator = "green"
                 elif foreground_average_accuracy < self.last_foreground_average_accuracy:
-                    color_indicator = colored("Red", "red")  # Colored output for accuracy decline
+                    color_indicator = "red"
+                else:
+                    color_indicator = "blue"
+            
+            # Update learning rate based on predicted change point
+            if len(self.foreground_accuracy_history) >= num_iterations_for_change:
+                if color_indicator == "green":
+                    self.learning_rate = min(0.7, self.learning_rate * 1.1)
+                elif color_indicator == "red":
                     self.learning_rate = max(0.1, self.learning_rate / 1.1)
-                
+
             # Make sure the learning rate stays within the desired range
             self.learning_rate = max(0.1, min(0.7, self.learning_rate))
-            
+
+            learning_rate_color = color_indicator if color_indicator else "white"
+            lr_colored = colored(f"Learning Rate {self.learning_rate:.3f}", learning_rate_color, attrs=["bold"])
+
             self.last_foreground_average_accuracy = foreground_average_accuracy
-            
-            print(f"Accuracy Color: {color_indicator} | Learning Rate: {self.learning_rate:.3f}")
+
+            print(lr_colored)
         else:
             print("No accuracy (yet)")
 
@@ -323,56 +323,63 @@ class SelfImprovingBot:
         bot_color = color_list[color_index]
         return bot_color
 
+    def find_change_iteration(self):
+        # Fit a linear regression model to predict accuracy change point
+        x = np.arange(len(self.foreground_accuracy_history)).reshape(-1, 1)
+        y = np.array(self.foreground_accuracy_history)
+        model = LinearRegression().fit(x, y)
+        predicted_change_iteration = int(model.predict([[len(self.foreground_accuracy_history)]]))
+        return max(10, predicted_change_iteration)  # Minimum of 10 iterations
+
     def print_accuracy_drift(self, bot_name):
-        num_iterations_for_change = 10  # Number of iterations to consider for average accuracy change
+        num_iterations_for_change = self.find_change_iteration()
 
         if len(self.foreground_accuracy_history) >= num_iterations_for_change:
             last_n_avg_accuracy = sum(self.foreground_accuracy_history[-num_iterations_for_change:]) / num_iterations_for_change
 
             if self.last_foreground_average_accuracy is not None:
                 if last_n_avg_accuracy > self.last_foreground_average_accuracy:
-                    change_color = "green"
-                    self.accuracy_change_count += 1  # Increment the accuracy change counter
+                    avg_accuracy_color = "green"
+                    self.accuracy_change_count += 1
                 elif last_n_avg_accuracy < self.last_foreground_average_accuracy:
-                    change_color = "red"
-                    self.accuracy_change_count += 1  # Increment the accuracy change counter
+                    avg_accuracy_color = "red"
+                    self.accuracy_change_count += 1
                 else:
-                    change_color = "blue"  # Display "No Change" in blue
+                    avg_accuracy_color = "blue"
 
-                bot_color = self.generate_unique_color(bot_name)  # Generate a unique color for the bot
+                bot_color = self.generate_unique_color(bot_name)
 
-                change_text = "Improving" if change_color == "green" else ("Declining" if change_color == "red" else "No Change")
-                change_text_colored = colored(change_text, change_color)
+                avg_accuracy_colored = colored(f"Average Accuracy: {last_n_avg_accuracy:.4f}", avg_accuracy_color)
                 bot_name_colored = colored(bot_name, bot_color, attrs=["bold"])
 
-                print(f"{bot_name_colored}, AVG.Accuracy: {last_n_avg_accuracy:.4f}, Change: {change_text_colored}, Count: {self.accuracy_change_count}")
+                print(f"{bot_name_colored}, {avg_accuracy_colored}, Count: {self.accuracy_change_count}")
                 self.last_foreground_average_accuracy = last_n_avg_accuracy
         else:
             print(f"{bot_name}, Not enough iterations for accuracy comparison.")
 
-    def print_global_accuracy(self, bot_name):
-        num_iterations_for_change = 10  # Number of iterations to consider for average accuracy change
+    # def print_global_accuracy(self, bot_name):
+    #     num_iterations_for_change = 10  # Number of iterations to consider for average accuracy change
 
-        if len(self.foreground_accuracy_history) >= num_iterations_for_change:
-            last_n_avg_accuracy = sum(self.foreground_accuracy_history[-num_iterations_for_change:]) / num_iterations_for_change
+    #     if len(self.foreground_accuracy_history) >= num_iterations_for_change:
+    #         last_n_avg_accuracy = sum(self.foreground_accuracy_history[-num_iterations_for_change:]) / num_iterations_for_change
 
-            if self.last_global_average_accuracy is not None:
-                if last_n_avg_accuracy > self.last_global_average_accuracy:
-                    global_change_color = "green"
-                elif last_n_avg_accuracy < self.last_global_average_accuracy:
-                    global_change_color = "red"
-                else:
-                    global_change_color = None
+    #         if self.last_global_average_accuracy is not None:
+    #             if last_n_avg_accuracy > self.last_global_average_accuracy:
+    #                 global_change_color = "green"
+    #             elif last_n_avg_accuracy < self.last_global_average_accuracy:
+    #                 global_change_color = "red"
+    #             else:
+    #                 global_change_color = None
 
-                if global_change_color:
-                    global_change_text = colored(f"{last_n_avg_accuracy:.4f}", global_change_color)  # Highlight the accuracy score
-                else:
-                    global_change_text = f"{last_n_avg_accuracy:.4f}"
+    #             if global_change_color:
+    #                 global_change_text = colored(f"{last_n_avg_accuracy:.4f}", global_change_color)  # Highlight the accuracy score
+    #             else:
+    #                 global_change_text = f"{last_n_avg_accuracy:.4f}"
 
-                print(f"Bot: {bot_name}, DO YOU SEE ME NOW??????????????????????????????????????????????????????????????????????? Global AVG.Accuracy: {global_change_text}")
-                self.last_global_average_accuracy = last_n_avg_accuracy
-        else:
-            print("Not enough iterations for global accuracy comparison.")
+    #             print(f"Bot: {bot_name}, DO YOU SEE ME NOW??????????????????????????????????????????????????????????????????????? Global AVG.Accuracy: {global_change_text}")
+    #             self.last_global_average_accuracy = last_n_avg_accuracy
+    #     else:
+    #         print("Not enough iterations for global accuracy comparison.")
         
     def predict_second_sentence(self, response_text):
         # Tokenize the response text
@@ -485,39 +492,21 @@ class SelfImprovingBot:
         response = self.generate_response(user_input, lang)
         return response
 
-    # def improve_own_knowledge(self):
-    #     with self.context_history_lock:
-    #         # Convert context history to a list for slicing
-    #         context_list = list(self.context_history)
-    #         context_subset = context_list[-self.dynamic_context_window:]  # Slicing on a list
-            
-    #         state = tuple(context_subset)  # Convert the subset back to a tuple for the 'state'
+    def improve_own_knowledge(self):
+        # Convert context history to a list for slicing
+        context_list = list(self.context_history)
+        context_subset = context_list[-self.dynamic_context_window:]  # Slicing on a list
+        
+        state = tuple(context_subset)  # Convert the subset back to a tuple for the 'state'
 
-    #         external_info = self.retrieve_external_knowledge(state)
-            
-    #         if external_info:
-    #             print("Running simulate_conversation to generate external information...")
-    #             self.simulate_conversation()  # Run simulate_conversation to get external information
-                
-    #             # Rest of your code for processing the simulated conversation output
-    #             # ...
-
-    def improve_own_knowledge(self, simulate_conversation_call=True):
-        if not simulate_conversation_call:
-            # Convert context history to a list for slicing
-            context_list = list(self.context_history)
-            context_subset = context_list[-self.dynamic_context_window:]  # Slicing on a list
-            
-            state = tuple(context_subset)  # Convert the subset back to a tuple for the 'state'
-
-            external_info = self.retrieve_external_knowledge(state)
-            
-            if external_info:
-                print("RandSentence")
-                new_letter = str(random.choice(brown.sents()))
-                #random_sentence = ' '.join(random_sentence)
-            #  new_letter = random.choice(string.ascii_letters)  # Generate a random letter
-                self.memory += new_letter  # Inject the new sentence into the memory
+        external_info = self.retrieve_external_knowledge(state)
+        
+        if external_info:
+            print("RandSentence")
+            new_letter = str(random.choice(brown.sents()))
+            #random_sentence = ' '.join(random_sentence)
+          #  new_letter = random.choice(string.ascii_letters)  # Generate a random letter
+            self.memory += new_letter  # Inject the new sentence into the memory
 
     def handle_state_change(self, new_info):
         if self.context_history:
@@ -534,6 +523,70 @@ class SelfImprovingBot:
     def conceptualize_difference(self, old_info, new_info):
         conceptualized_difference = "Conceptualized Difference"
         return conceptualized_difference
+    
+    def analyze_accuracy_drift(self, bot_name):
+        num_iterations_for_change = self.find_change_iteration()
+
+        if len(self.foreground_accuracy_history) >= num_iterations_for_change:
+            last_n_avg_accuracy = sum(self.foreground_accuracy_history[-num_iterations_for_change:]) / num_iterations_for_change
+
+            if self.last_foreground_average_accuracy is not None:
+                if last_n_avg_accuracy > self.last_foreground_average_accuracy:
+                    avg_accuracy_color = "green"
+                    self.accuracy_change_count += 1
+                elif last_n_avg_accuracy < self.last_foreground_average_accuracy:
+                    avg_accuracy_color = "red"
+                    self.accuracy_change_count += 1
+                else:
+                    avg_accuracy_color = "blue"
+
+                bot_color = self.generate_unique_color(bot_name)
+
+                avg_accuracy_colored = colored(f"Average Accuracy: {last_n_avg_accuracy:.4f}", avg_accuracy_color)
+                bot_name_colored = colored(bot_name, bot_color, attrs=["bold"])
+
+                print(f"{bot_name_colored}, {avg_accuracy_colored}, Count: {self.accuracy_change_count}")
+                self.last_foreground_average_accuracy = last_n_avg_accuracy
+        else:
+            print(f"{bot_name}, Not enough iterations for accuracy comparison.")
+
+    def contribute_to_context(self, response, response_accuracy):
+        # Share responses with accuracy above the dynamic shared threshold
+        if response_accuracy >= self.accuracy_threshold_shared:
+            with self.context_history_lock:
+                self.context_history.append(response)
+                SelfImprovingBot.shared_context_history.append(response)
+                
+                # Increment the shared context addition count
+                self.shared_context_add_count += 1
+                
+                # Print prominent message about shared contribution
+                bot_name_colored = colored(self.name, attrs=["bold"])
+                accuracy_colored = colored(f"Accuracy: {response_accuracy:.4f}", "green")
+                contribution_message = f"New context added by {bot_name_colored} (Shared) | {accuracy_colored}"
+                print(contribution_message)
+                
+                # Print the shared context addition count
+                print(f"Shared context added {self.shared_context_add_count} times")
+                
+                # Calculate average bot score
+                average_bot_score = sum(self.response_quality.values()) / len(self.response_quality)
+                
+                # Dynamically adjust the shared accuracy threshold based on average bot score
+                crescendo_factor = 0.01  # Adjust this factor to control the crescendo rate
+                self.accuracy_threshold_shared = min(0.7, self.accuracy_threshold_shared + average_bot_score * crescendo_factor)
+                
+        # Store valid responses in the individual context
+        if response_accuracy >= self.accuracy_threshold_individual:
+            self.context_history.append(response)
+            self.response_quality[response] = response_accuracy
+            
+            # Calculate average bot score
+            average_bot_score_individual = sum(self.response_quality.values()) / len(self.response_quality)
+            
+            # Dynamically adjust the individual accuracy threshold based on average bot score
+            crescendo_factor_individual = 0.01  # Adjust this factor to control the crescendo rate for individual context
+            self.accuracy_threshold_individual = min(0.7, self.accuracy_threshold_individual + average_bot_score_individual * crescendo_factor_individual)
 
     def simulate_conversation(self):
         with self.simulate_conversation_lock:
@@ -541,7 +594,7 @@ class SelfImprovingBot:
                 user_input = "hello Generate_response."
                 response = self.generate_response(user_input)
                 print(response)
-                conversation = self.generate_random_conversation()  # Generate a random conversation
+                conversation = self.generate_random_conversation()
 
                 for user_input, lang in conversation:
                     random_paragraph = " ".join(" ".join(sentence) for sentence in (random.choice(brown.sents()) for _ in range(5)))
@@ -549,7 +602,6 @@ class SelfImprovingBot:
 
                     while len(sentences) < 4:
                         print("Not enough sentences in the paragraph to extract two sentences.")
-                        self.improve_own_knowledge(simulate_conversation_call=False)  # Skip the improvement logic
                         conversation = self.generate_random_conversation()  # Generate a new conversation
                         random_paragraph = " ".join(" ".join(sentence) for sentence in (random.choice(brown.sents()) for _ in range(5)))
                         sentences = nltk.sent_tokenize(random_paragraph)
@@ -569,10 +621,15 @@ class SelfImprovingBot:
                     print(f"Impr. response: {improved_response} (Accuracy: {accuracy})")
 
                     # Rest of your code for updating context_history, self-improvement, etc.
-                    self.context_history = [user_input, response, improved_response]
+                    self.context_history.append(user_input)
+                    self.context_history.append(response)
+                    self.context_history.append(improved_response)
+                    self.response_quality[improved_response] = accuracy
                     self.improve_own_knowledge()
                     self.optimize_resources()
                     self.self_improve()
+                    self.analyze_accuracy_drift(self.name)
+                    self.contribute_to_context(improved_response, accuracy)  
 
     def generate_random_conversation(self):
         num_turns = random.randint(3, 10)  # Generate a random number of conversation turns
@@ -595,7 +652,7 @@ def bot_process(bot_name):
 
 
 if __name__ == "__main__":
-    num_bots = 10
+    num_bots = 12
     bot_names = [f"zchg.org{i}" for i in range(1, num_bots + 1)]
 
     manager = multiprocessing.Manager()
