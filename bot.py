@@ -68,7 +68,7 @@ nltk.download('brown', download_dir="./")
 class SelfImprovingBot:
     shared_context_history = None  # Initialize the class attribute
     
-    def __init__(self, decay_factor=0.95, max_context_length=5000, dynamic_context_window=550, name="name"):
+    def __init__(self, decay_factor=0.8, max_context_length=5000, dynamic_context_window=550, name="name"):
         self.max_context_length = max_context_length
         self.name = name
         self.dynamic_context_window = dynamic_context_window
@@ -396,7 +396,7 @@ class SelfImprovingBot:
     def apply_ml_suggestions(self, response, context):
         if self.ml_model:
             response_text = response.lower().strip()
-            
+
             context_suggestions = [suggestion for suggestion in self.context_history if response_text not in suggestion]
 
             if context_suggestions:
@@ -413,10 +413,19 @@ class SelfImprovingBot:
                 if isinstance(most_relevant_suggestion, tuple):
                     most_relevant_suggestion = most_relevant_suggestion[0]
 
-                improved_response = most_relevant_suggestion
+                # Calculate the accuracy score based on the merit using compare_sentences
+                accuracy = self.compare_sentences(response_text, most_relevant_suggestion)
+
+                # Apply the improved suggestion only if it's more accurate
+                if accuracy > self.response_quality.get(response, 0):
+                    improved_response = most_relevant_suggestion
+                else:
+                    improved_response = response
+
                 return improved_response
 
         return response
+
     
     def calculate_similarity(self, response_text, context_suggestions):
         vectorizer = TfidfVectorizer()
