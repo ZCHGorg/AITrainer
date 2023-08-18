@@ -1,7 +1,7 @@
 <h1 align="center">
   <br>
   <br>
-  Distributed Machine Learning Swarm Bot with Docker
+  Distributed Machine Learning Swarm Bot Trainer with Docker
   <br>
 </h1>
 
